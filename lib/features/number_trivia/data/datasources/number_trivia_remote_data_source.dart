@@ -18,6 +18,7 @@ abstract class NumberTriviaRemoteDataSource {
 }
 
 const BASE_URL ='http://numbersapi.com';
+const RANDOM_BASE_URL = 'http://numbersapi.com/random';
 class NumberTriviaRemoteDataSourceImpl implements NumberTriviaRemoteDataSource {
   final http.Client client;
 NumberTriviaRemoteDataSourceImpl({ required this.client});
@@ -33,8 +34,11 @@ NumberTriviaRemoteDataSourceImpl({ required this.client});
   }
 
   @override
-  Future<NumberTriviaModel> getRandomNumberTrivia() {
-    // TODO: implement getRandomNumberTrivia
-    throw UnimplementedError();
+  Future<NumberTriviaModel> getRandomNumberTrivia() async {
+    http.Response response = await client.get(Uri.parse(RANDOM_BASE_URL),headers: {'Content-Type': 'application/json'});
+    if(response.statusCode == 200 ) {
+    return  Future.value(NumberTriviaModel.fromJson(json.decode(response.body)));
+    }
+    throw ServerException();
   }
 }
