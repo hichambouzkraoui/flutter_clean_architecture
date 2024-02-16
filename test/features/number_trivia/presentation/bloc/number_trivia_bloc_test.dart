@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_clean_architecture/core/error/failures.dart';
+import 'package:flutter_clean_architecture/core/usecases/usecase.dart';
 import 'package:flutter_clean_architecture/core/util/input_converter.dart';
 import 'package:flutter_clean_architecture/features/number_trivia/domain/entities/number_trivia.dart';
 import 'package:flutter_clean_architecture/features/number_trivia/presentation/bloc/number_trivia_bloc.dart';
@@ -21,6 +22,7 @@ void main() {
   late MockInputConverter mockInputConverter;
    setUpAll(() {
     registerFallbackValue(Params(number:1));
+    registerFallbackValue(NoParams());
   });
 
     setUp(() {
@@ -122,6 +124,64 @@ void main() {
     ];
     expectLater(bloc.stream, emitsInOrder(expected));
   });
-});
 
+});
+  group ('GetTriviaForRandomNumber',() {
+    final tNumberTrivia = NumberTrivia(number: 1, text: 'test trivia');
+    test('should get data from the random use case',() async {
+      //arrange
+      when(() => mockGetRandomNumberTrivia(any()))
+      .thenAnswer((_) async => Right(tNumberTrivia));
+      //act
+      bloc.add(GetTriviaForRandomNumber());
+      await untilCalled(() => mockGetRandomNumberTrivia(any()));
+      //assert
+      verify(() => mockGetRandomNumberTrivia(NoParams()));
+
+    });
+
+    test('should emit [Loading, Loaded] when data is gotten successfully', () async {
+      //arrange
+      when(() => mockGetRandomNumberTrivia(any()))
+      .thenAnswer((_) async => Right(tNumberTrivia));
+      // act
+      bloc.add(GetTriviaForRandomNumber());
+     // assert later
+      final expected = [
+        Loading(),
+        Loaded(trivia: tNumberTrivia),
+      ];
+      expectLater(bloc.stream, emitsInOrder(expected));
+    });
+
+    test('should emit [Loading, Error] when getting data fails', () async {
+      //arrange
+      when(() => mockGetRandomNumberTrivia(any()))
+      .thenAnswer((_) async => Left(ServerFailure()));
+      // act
+      bloc.add(GetTriviaForRandomNumber());
+     // assert later
+      final expected = [
+        Loading(),
+        Error(message: SERVER_FAILURE_MESSAGE),
+      ];
+      expectLater(bloc.stream, emitsInOrder(expected));
+      
+    });
+
+    test('should emit [Loading, Error] with a proper message for the error when getting data fails', () {
+            //arrange
+      when(() => mockGetRandomNumberTrivia(any()))
+      .thenAnswer((_) async => Left(CacheFailure()));
+      // act
+      bloc.add(GetTriviaForRandomNumber());
+     // assert later
+      final expected = [
+        Loading(),
+        Error(message: CACHE_FAILURE_MESSAGE),
+      ];
+      expectLater(bloc.stream, emitsInOrder(expected));
+    });
+
+  });
 }

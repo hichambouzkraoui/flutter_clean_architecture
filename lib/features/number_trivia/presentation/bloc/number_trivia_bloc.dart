@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_clean_architecture/core/error/failures.dart';
+import 'package:flutter_clean_architecture/core/usecases/usecase.dart';
 import 'package:flutter_clean_architecture/core/util/input_converter.dart';
 import 'package:flutter_clean_architecture/features/number_trivia/domain/entities/number_trivia.dart';
 import 'package:flutter_clean_architecture/features/number_trivia/usecases/get_concrete_number_trivia.dart';
@@ -31,15 +32,34 @@ class NumberTriviaBloc extends Bloc<NumberTriviaEvent, NumberTriviaState> {
           (integer) async {
             emit(Loading());
             Either<Failure, NumberTrivia> failureOrTrivia = await concrete(Params(number: integer));
-            failureOrTrivia.fold(
-              (failure) => emit(
-                            Error(
-                              message: failure is ServerFailure ? SERVER_FAILURE_MESSAGE : CACHE_FAILURE_MESSAGE)
-                            ),
-              (trivia) => emit(Loaded(trivia: trivia))
-            );
+            _eitherLoadedOrErrorState(failureOrTrivia);
           }
         );
     });
+
+    on<GetTriviaForRandomNumber>((event, emit) async {
+      emit(Loading());
+      Either<Failure, NumberTrivia> failureOrTrivia = await random(NoParams());
+      _eitherLoadedOrErrorState(failureOrTrivia);
+    });
+
+  }
+
+  void _eitherLoadedOrErrorState(Either<Failure, NumberTrivia> either) {
+      either.fold(
+        (failure) => emit(Error(message: _errorToMsg(failure))),
+        (trivia) => emit(Loaded(trivia: trivia))
+      );
+  }
+
+  String _errorToMsg(Failure failure) {
+    switch (failure.runtimeType) {
+      case ServerFailure:
+        return SERVER_FAILURE_MESSAGE;
+      case CacheFailure:
+        return CACHE_FAILURE_MESSAGE;
+      default:
+        return 'Unexpected Error';
+    }
   }
 }
