@@ -11,6 +11,7 @@ class NumberTriviaPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Number Trivia'),
+        backgroundColor: Theme.of(context).primaryColor
       ),
       body: SingleChildScrollView(
         child: buildBody(context),
