@@ -14,7 +14,7 @@ import 'package:http/http.dart' as http;
 
 final sl = GetIt.instance;
 
-void init() async {
+Future<void> init() async {
   //! Features - Number Trivia
   //Bloc
   sl.registerFactory(
